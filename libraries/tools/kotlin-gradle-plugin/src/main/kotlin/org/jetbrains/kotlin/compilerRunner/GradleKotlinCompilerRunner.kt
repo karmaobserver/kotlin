@@ -28,14 +28,20 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import com.intellij.openapi.util.io.FileUtil
+import org.gradle.api.invocation.Gradle
+import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.daemon.client.CompileServiceSession
 import org.jetbrains.kotlin.daemon.common.*
+import org.jetbrains.kotlin.daemon.common.GradleModule
+import org.jetbrains.kotlin.daemon.common.GradleModulesInfo
 import org.jetbrains.kotlin.gradle.plugin.kotlinDebug
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.incremental.*
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
+import java.lang.ref.WeakReference
 import java.net.URLClassLoader
 import java.rmi.RemoteException
 
@@ -267,10 +273,10 @@ internal class GradleCompilerRunner(private val project: Project) : KotlinCompil
                 requestedCompilationResults = arrayOf(CompilationResultCategory.IC_COMPILE_ITERATION.code),
                 compilerMode = CompilerMode.INCREMENTAL_COMPILER,
                 targetPlatform = targetPlatform,
-                resultDifferenceFile = environment.buildHistoryFile,
-                friendDifferenceFile = environment.friendBuildHistoryFile,
                 usePreciseJavaTracking = environment.usePreciseJavaTracking,
-                localStateDirs = environment.localStateDirs
+                localStateDirs = environment.localStateDirs,
+                buildHistoryFile = environment.buildHistoryFile!!,
+                modulesInfo = buildModulesInfo(project.gradle)
         )
 
         log.info("Options for KOTLIN DAEMON: $compilationOptions")
@@ -340,6 +346,40 @@ internal class GradleCompilerRunner(private val project: Project) : KotlinCompil
     }
 
     companion object {
+        @Volatile
+        private var cachedGradle = WeakReference<Gradle>(null)
+        @Volatile
+        private var cachedModulesInfo: GradleModulesInfo? = null
+
+        @Synchronized
+        private fun buildModulesInfo(gradle: Gradle): GradleModulesInfo {
+            if (cachedGradle.get() === gradle && cachedModulesInfo != null) return cachedModulesInfo!!
+
+            val dirToModule = HashMap<File, GradleModule>()
+            val nameToModules = HashMap<String, HashSet<GradleModule>>()
+
+            for (project in gradle.rootProject.allprojects) {
+                for (task in project.tasks.withType(KotlinCompile::class.java)) {
+                    val module = GradleModule(project.path, task.moduleName, project.buildDir, task.buildHistoryFile)
+                    dirToModule[task.destinationDir] = module
+                    task.javaOutputDir?.let { dirToModule[it] = module }
+                    nameToModules.getOrPut(module.name) { HashSet() }.add(module)
+                }
+            }
+
+            return GradleModulesInfo(gradle.rootProject.projectDir, dirToModule, nameToModules)
+                .also {
+                    cachedGradle = WeakReference(gradle)
+                    cachedModulesInfo = it
+                }
+        }
+
+        @Synchronized
+        internal fun clearBuildModulesInfo() {
+            cachedGradle = WeakReference<Gradle>(null)
+            cachedModulesInfo = null
+        }
+
         // created once per gradle instance
         // when gradle daemon dies, kotlin daemon should die too
         // however kotlin daemon (if it idles enough) can die before gradle daemon dies
