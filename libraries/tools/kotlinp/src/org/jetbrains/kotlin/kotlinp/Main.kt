@@ -35,7 +35,7 @@ object Main {
                 when (file.extension) {
                     "class" -> Kotlinp.renderClassFile(Kotlinp.readClassFile(file))
                     "kotlin_module" -> Kotlinp.renderModuleFile(Kotlinp.readModuleFile(file))
-                    else -> throw KotlinpException("only .class files are supported")
+                    else -> throw KotlinpException("only .class and .kotlin_module files are supported")
                 }
             } catch (e: IOException) {
                 throw KotlinpException("I/O operation failed: ${e.message}")
