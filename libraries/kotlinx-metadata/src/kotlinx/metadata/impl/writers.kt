@@ -310,7 +310,7 @@ private fun writeContract(c: WriteContext, output: (ProtoBuf.Contract.Builder) -
     object : KmContractVisitor() {
         val t = ProtoBuf.Contract.newBuilder()
 
-        override fun visitEffect(type: KmEffectType?, invocationKind: KmEffectInvocationKind?): KmEffectVisitor? =
+        override fun visitEffect(type: KmEffectType, invocationKind: KmEffectInvocationKind?): KmEffectVisitor? =
             writeEffect(c, type, invocationKind) { t.addEffect(it) }
 
         override fun visitEnd() {
@@ -319,7 +319,7 @@ private fun writeContract(c: WriteContext, output: (ProtoBuf.Contract.Builder) -
     }
 
 private fun writeEffect(
-    c: WriteContext, type: KmEffectType?, invocationKind: KmEffectInvocationKind?,
+    c: WriteContext, type: KmEffectType, invocationKind: KmEffectInvocationKind?,
     output: (ProtoBuf.Effect.Builder) -> Unit
 ): KmEffectVisitor = object : KmEffectVisitor() {
     val t = ProtoBuf.Effect.newBuilder()
@@ -336,7 +336,6 @@ private fun writeEffect(
             KmEffectType.RETURNS_CONSTANT -> t.effectType = ProtoBuf.Effect.EffectType.RETURNS_CONSTANT
             KmEffectType.CALLS -> t.effectType = ProtoBuf.Effect.EffectType.CALLS
             KmEffectType.RETURNS_NOT_NULL -> t.effectType = ProtoBuf.Effect.EffectType.RETURNS_NOT_NULL
-            null -> null
         }
         val unused2 = when (invocationKind) {
             KmEffectInvocationKind.AT_MOST_ONCE -> t.kind = ProtoBuf.Effect.InvocationKind.AT_MOST_ONCE
