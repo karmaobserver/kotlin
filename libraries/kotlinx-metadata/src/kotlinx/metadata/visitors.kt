@@ -640,12 +640,12 @@ abstract class KmVersionRequirementVisitor @JvmOverloads constructor(private val
 abstract class KmContractVisitor @JvmOverloads constructor(private val delegate: KmContractVisitor? = null) {
     /**
      * Visits an effect of this contract.
-     * 
-     * @param type optional type of the effect
+     *
+     * @param type type of the effect
      * @param invocationKind optional number of invocations of the lambda parameter of this function,
-     *                       specified further in the effect expression
+     *   specified further in the effect expression
      */
-    open fun visitEffect(type: KmEffectType?, invocationKind: KmEffectInvocationKind?): KmEffectVisitor? =
+    open fun visitEffect(type: KmEffectType, invocationKind: KmEffectInvocationKind?): KmEffectVisitor? =
         delegate?.visitEffect(type, invocationKind)
 
     /**

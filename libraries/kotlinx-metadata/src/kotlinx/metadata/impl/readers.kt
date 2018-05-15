@@ -342,7 +342,9 @@ private fun MessageLite.acceptVersionRequirementVisitor(v: KmVersionRequirementV
 
 private fun ProtoBuf.Contract.accept(v: KmContractVisitor, c: ReadContext) {
     for (effect in effectList) {
-        val effectType = if (!effect.hasEffectType()) null else when (effect.effectType!!) {
+        if (!effect.hasEffectType()) continue
+
+        val effectType = when (effect.effectType!!) {
             ProtoBuf.Effect.EffectType.RETURNS_CONSTANT -> KmEffectType.RETURNS_CONSTANT
             ProtoBuf.Effect.EffectType.CALLS -> KmEffectType.CALLS
             ProtoBuf.Effect.EffectType.RETURNS_NOT_NULL -> KmEffectType.RETURNS_NOT_NULL
