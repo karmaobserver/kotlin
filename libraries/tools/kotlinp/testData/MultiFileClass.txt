@@ -8,7 +8,7 @@ multi-file class {
 package {
   // facade: test/File
 
-  // x:I
+  // field: x:I
   public final const val x: kotlin/Int /* = ... */
     public final get
 }

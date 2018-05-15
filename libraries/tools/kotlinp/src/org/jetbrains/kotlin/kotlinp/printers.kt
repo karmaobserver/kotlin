@@ -53,7 +53,7 @@ private fun visitFunction(sb: StringBuilder, flags: Int, name: String): KmFuncti
                 sb.appendln("  // $versionRequirement")
             }
             if (jvmDesc != null) {
-                sb.appendln("  // $jvmDesc")
+                sb.appendln("  // signature: $jvmDesc")
             }
             sb.append("  ")
             sb.appendFlags(flags, FUNCTION_FLAGS_MAP)
@@ -124,7 +124,7 @@ private fun visitProperty(sb: StringBuilder, flags: Int, name: String, getterFla
                 sb.appendln("  // $versionRequirement")
             }
             if (jvmFieldName != null || jvmFieldTypeDesc != null) {
-                sb.append("  // ${jvmFieldName ?: "<null>"}")
+                sb.append("  // field: ${jvmFieldName ?: "<null>"}")
                 if (jvmFieldTypeDesc != null) {
                     sb.append(":$jvmFieldTypeDesc")
                 }
@@ -201,7 +201,7 @@ private fun visitConstructor(sb: StringBuilder, flags: Int): KmConstructorVisito
                 sb.appendln("  // $versionRequirement")
             }
             if (jvmDesc != null) {
-                sb.appendln("  // $jvmDesc")
+                sb.appendln("  // signature: $jvmDesc")
             }
             sb.append("  ")
             sb.appendFlags(flags, CONSTRUCTOR_FLAGS_MAP)

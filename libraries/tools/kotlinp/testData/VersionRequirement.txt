@@ -3,7 +3,7 @@
   // requires API version 1.2.0 (level=WARNING, message="Klass must not be used!")
 public final class test/Klass : kotlin/Any {
 
-  // <init>()V
+  // signature: <init>()V
   public /* primary */ constructor()
 }
 // test/Konstructor.class
@@ -11,7 +11,7 @@ public final class test/Klass : kotlin/Any {
 public final class test/Konstructor : kotlin/Any {
 
   // requires language version 42.0.0 (level=WARNING, errorCode=42, message="Konstructor must not be used!")
-  // <init>()V
+  // signature: <init>()V
   public /* primary */ constructor()
 }
 // test/VersionRequirementKt.class
@@ -19,11 +19,11 @@ public final class test/Konstructor : kotlin/Any {
 package {
 
   // requires compiler version 1.2.40 (level=ERROR)
-  // function()V
+  // signature: function()V
   public final fun function(): kotlin/Unit
 
   // requires language version 1.3.0 (level=ERROR, message="property must not be used!")
-  // property:Ljava/lang/String;
+  // field: property:Ljava/lang/String;
   // getter: getProperty()Ljava/lang/String;
   // synthetic method for annotations: property$annotations()V
   public final val property: kotlin/String /* = ... */
