@@ -13,12 +13,23 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
 import org.jetbrains.kotlin.metadata.jvm.deserialization.serializeToByteArray
 
+/**
+ * Represents the parsed metadata of a Kotlin JVM module file.
+ *
+ * To create an instance of [KotlinModuleMetadata], load the contents of the `.kotlin_module` file into a byte array
+ * and call [KotlinModuleMetadata.read].
+ *
+ * @property bytes the byte array representing the contents of a `.kotlin_module` file
+ */
 class KotlinModuleMetadata(@Suppress("CanBeParameter", "MemberVisibilityCanBePrivate") val bytes: ByteArray) {
     internal val data: ModuleMapping = ModuleMapping.loadModuleMapping(bytes, javaClass.name, isVersionCompatible = { version ->
         // We only support metadata of version 1.1.* (this is Kotlin from 1.0 until today)
         version.getOrNull(0) == 1 && version.getOrNull(1) == 1
     }, skipMetadataVersionCheck = false, isJvmPackageNameSupported = true)
 
+    /**
+     * A [KmModuleVisitor] that generates the metadata of a Kotlin JVM module file.
+     */
     class Writer : KmModuleVisitor() {
         private val b = JvmModuleProtoBuf.Module.newBuilder()
 
@@ -44,10 +55,21 @@ class KotlinModuleMetadata(@Suppress("CanBeParameter", "MemberVisibilityCanBePri
             */
         }
 
+        /**
+         * Returns the metadata of the module file that was written with this writer.
+         *
+         * @param metadataVersion metadata version to be written to the metadata (see [KotlinClassHeader.metadataVersion]),
+         *   [KotlinClassHeader.COMPATIBLE_METADATA_VERSION] by default
+         */
         fun write(metadataVersion: IntArray = KotlinClassHeader.COMPATIBLE_METADATA_VERSION): KotlinModuleMetadata =
             KotlinModuleMetadata(b.build().serializeToByteArray(metadataVersion))
     }
 
+    /**
+     * Makes the given visitor visit metadata of this module file.
+     *
+     * @param v the visitor that must visit this module file
+     */
     fun accept(v: KmModuleVisitor) {
         for ((fqName, parts) in data.packageFqName2Parts) {
             val (fileFacades, multiFileClassParts) = parts.parts.partition { parts.getMultifileFacadeName(it) == null }
@@ -89,18 +111,39 @@ class KotlinModuleMetadata(@Suppress("CanBeParameter", "MemberVisibilityCanBePri
     }
 }
 
+/**
+ * A visitor to visit Kotlin JVM module files.
+ *
+ * When using this class, [visitEnd] must be called exactly once and after calls to all other visit* methods.
+ */
 abstract class KmModuleVisitor(private val delegate: KmModuleVisitor? = null) {
     /**
-     * @param multiFileClassParts a map of multi-file class part name -> name of the corresponding multi-file facade
+     * Visits the table of single- and multi-file facades declared in some package of this module. Note that the same package may be split
+     * in several "chunks", in which case this method is called several times for one package, once for each chunk.
+     *
+     * Packages are separated by '/' in the names of file facades.
+     *
+     * @param fqName the fully qualified name of the package
+     * @param fileFacades the list of single-file facades in this chunk of the package
+     * @param multiFileClassParts the map of multi-file classes where keys are names of multi-file class parts,
+     *   and values are names of the corresponding multi-file facades
      */
     open fun visitPackageParts(fqName: String, fileFacades: List<String>, multiFileClassParts: Map<String, String>) {
         delegate?.visitPackageParts(fqName, fileFacades, multiFileClassParts)
     }
 
+    /**
+     * Visits the annotation on the module.
+     *
+     * @param annotation annotation on the module
+     */
     open fun visitAnnotation(annotation: KmAnnotation) {
         delegate?.visitAnnotation(annotation)
     }
 
+    /**
+     * Visits the end of the module.
+     */
     open fun visitEnd() {
         delegate?.visitEnd()
     }
