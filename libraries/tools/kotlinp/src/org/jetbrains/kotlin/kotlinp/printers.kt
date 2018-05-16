@@ -421,14 +421,14 @@ private fun renderAnnotation(annotation: KmAnnotation): String =
 private fun renderAnnotationArgument(arg: KmAnnotationArgument<*>): String =
     when (arg) {
         is KmAnnotationArgument.ByteValue -> arg.value.toString() + ".toByte()"
-        is KmAnnotationArgument.CharValue -> "'${arg.value}'"
+        is KmAnnotationArgument.CharValue -> "'${arg.value.toString().sanitize(quote = '\'')}'"
         is KmAnnotationArgument.ShortValue -> arg.value.toString() + ".toShort()"
         is KmAnnotationArgument.IntValue -> arg.value.toString()
         is KmAnnotationArgument.LongValue -> arg.value.toString() + "L"
         is KmAnnotationArgument.FloatValue -> arg.value.toString() + "f"
         is KmAnnotationArgument.DoubleValue -> arg.value.toString()
         is KmAnnotationArgument.BooleanValue -> arg.value.toString()
-        is KmAnnotationArgument.StringValue -> "\"${arg.value}\""
+        is KmAnnotationArgument.StringValue -> "\"${arg.value.sanitize(quote = '"')}\""
         is KmAnnotationArgument.KClassValue -> "${arg.value}::class"
         is KmAnnotationArgument.EnumValue -> arg.value
         is KmAnnotationArgument.AnnotationValue -> arg.value.let { annotation ->
@@ -438,6 +438,19 @@ private fun renderAnnotationArgument(arg: KmAnnotationArgument<*>): String =
             "${annotation.className}($args)"
         }
         is KmAnnotationArgument.ArrayValue -> arg.value.joinToString(prefix = "[", postfix = "]", transform = ::renderAnnotationArgument)
+    }
+
+private fun String.sanitize(quote: Char): String =
+    buildString(length) {
+        for (c in this@sanitize) {
+            when (c) {
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                quote -> append("\\").append(quote)
+                else -> append(if (c.isISOControl()) "\\u%04x".format(c.toInt()) else c)
+            }
+        }
     }
 
 private fun printVersionRequirement(output: (String) -> Unit): KmVersionRequirementVisitor =

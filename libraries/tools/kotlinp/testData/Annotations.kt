@@ -37,16 +37,16 @@ class C {
         239239239239239L,
         3.14,
         [true],
-        ['x'],
+        ['\''],
         [1.toByte()],
         [42.toShort()],
         [42424242],
         [-2.72f],
         [239239239239239L],
         [3.14],
-        "aba",
+        "aba\ncaba'\"\t\u0001\u0002\uA66E",
         AnnotationTarget.CLASS,
         C::class,
-        B(value = "caba")
+        B(value = "aba\ncaba'\"\t\u0001\u0002\uA66E")
     ) Unit {}
 }
